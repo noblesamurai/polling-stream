@@ -18,7 +18,10 @@ $ npm install polling-stream
 
 ``` js
 let pollingStream = require('polling-stream');
-let s = pollingStream(getNextStreamSegment, { start: 0, batch: 10 }, 2000);
+// poll every 2 seconds after each segment stream has finished
+let s = pollingStream(getNextStreamSegment, { start: 0, batch: 10 }, { interval: 2000 }});
+
+// generate a stream of numbers from 0 to 13, in batches of 10 numbers
 function getNextStreamSegment(state) {
     let i = 0;
     let rs = Readable({

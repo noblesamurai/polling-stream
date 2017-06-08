@@ -1,6 +1,6 @@
 {
   "name": "polling-stream",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Emit a perpetual readable stream by providing a function that returns the next segment of the readable stream.",
   "main": "index.js",
   "scripts": {

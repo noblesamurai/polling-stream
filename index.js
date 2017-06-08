@@ -13,6 +13,10 @@ module.exports = function (fn, state = {}, opts) {
 
   function poll() {
     const batchStream = fn(state);
+    batchStream.once('error', (err) => {
+      rs.emit('error', err);
+      finished = true;
+    });
     batchStream.once('terminate', () => {
       finished = true;
     });

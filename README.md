@@ -42,7 +42,8 @@ function getNextStreamSegment(state) {
     return rs;
 }
 s.on('data', console.log);
-// Will print the numbers from 0 to 13
+// Will print the numbers from 0 to 9, wait two seconds then print out
+// the nunbers 10 to 13
 ```
 
 ## API

@@ -3,7 +3,9 @@ const pollingStream = require('..');
 const { Readable } = require('stream');
 
 it('should be able to poll from a stream', function(t) {
-  let s = pollingStream(fn, { start: 0, batch: 10 });
+  t.plan(16);
+
+  let s = pollingStream(fn, { start: 0, batch: 10 }, { interval: 2000 });
   let j = 0;
   function fn(state) {
     let i = 0;
@@ -15,7 +17,6 @@ it('should be able to poll from a stream', function(t) {
           rs.emit('terminate');
           return;
         }
-        console.log('pushing', j++);
         rs.push(state.start++);
         if (++i >= state.batch) rs.push(null)
       }
@@ -24,11 +25,15 @@ it('should be able to poll from a stream', function(t) {
   }
 
   let i = 0;
+  let segments = 0;
+  s.on('sync', () => {
+    segments++;
+  })
   s.on('data', (data) => {
-    console.log('got', data);
     t.equal(i++, data);
   });
   s.on('end', () => {
+    t.equal(segments, 1);
     t.equal(i, 14);
     t.end();
   });

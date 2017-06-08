@@ -1,12 +1,15 @@
 const once = require('once');
 const { Readable, Transform } = require('stream');
-module.exports = function (fn, state = {}, interval = 1000) {
-  var finished = false;
+module.exports = function (fn, state = {}, opts) {
+  let finished = false;
 
-  const rs = Readable({
-    objectMode: true,
-    read: once(poll)
-  });
+  let interval = opts.interval || 1000;
+  let streamOpts = Object.assign(
+    { objectMode: true, interval: undefined },
+    opts,
+    { read: once(poll) });
+
+  const rs = Readable(streamOpts);
 
   function poll() {
     const batchStream = fn(state);
@@ -16,9 +19,7 @@ module.exports = function (fn, state = {}, interval = 1000) {
     batchStream.pipe(Transform({
       objectMode: true,
       transform: (chunk, enc, cb) => {
-        if (!finished) {
-          rs.push(chunk);
-        }
+        rs.push(chunk);
         cb();
       },
       flush: () => {

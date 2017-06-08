@@ -2,7 +2,7 @@
 
 Emit a perpetual readable stream by providing a function that returns the next segment of the readable stream.
 
-[![build status](https://secure.travis-ci.org/eugeneware/polling-stream.png)](http://travis-ci.org/eugeneware/polling-stream)
+[![build status](https://secure.travis-ci.org/noblesamurai/polling-stream.png)](http://travis-ci.org/noblesamurai/polling-stream)
 
 This module is a good if you want an perpetual read stream where you need to poll for changes to each new 'segment' of the stream. An example would be polling a database for changes at the end of a table.
 

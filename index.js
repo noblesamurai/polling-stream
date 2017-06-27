@@ -26,7 +26,6 @@ class BatchStream extends PassThrough {
     batchStream.once('end', () => {
       batchStream.unpipe(this);
       if (!this.finished) this.emit('sync');
-      this.poll();
       setTimeout(() => this.poll(), this.interval);
     });
     batchStream.pipe(this, { end: false });

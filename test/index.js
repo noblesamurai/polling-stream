@@ -96,11 +96,6 @@ it('should apply backpressure', (t) => {
     return rs;
   }
 
-  // Note: I'm not entirely sure how the back pressure numbers add up...
-  // however setting everything to 1 seems to result in us pushing about 4
-  // items through (I'm guessing the polling streams "pass through" stream
-  // counts as 2, 1 for the "readable" part and 1 for the "writable" part
-
   let i = 0;
   function next() {
     return i < 10 ? i++ : null;
@@ -109,8 +104,10 @@ it('should apply backpressure', (t) => {
   let ws = new Writable({ objectMode: true, highWaterMark: 1, write(c) {} });
   s.pipe(ws);
 
+  // back pressure should be ~4, one for each step (rs, s and ws + an extra
+  // that is currently blocked in the ws:write call.
   setTimeout(() => {
-    t.ok(i < 10);
+    t.equal(i, 4);
     t.end();
   }, 0);
 });

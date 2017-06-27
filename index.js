@@ -1,6 +1,6 @@
 const { PassThrough } = require('stream');
 
-class BatchStream extends PassThrough {
+class PollingStream extends PassThrough {
   constructor (fn, state = {}, opts) {
     super(Object.assign({}, opts, { objectMode: true }));
     this.fn = fn;
@@ -11,9 +11,9 @@ class BatchStream extends PassThrough {
   }
   poll () {
     if (this.finished) return;
-    const batchStream = this.fn(this.state);
+    const inputStream = this.fn(this.state);
     // Errors in the underlying stream(s) are passed on.
-    batchStream.once('error', (err) => {
+    inputStream.once('error', (err) => {
       this.finished = true;
       // emit error on the next tick to allow any pending data to be processed
       // first.
@@ -21,7 +21,7 @@ class BatchStream extends PassThrough {
     });
     // Termination of the underlying stream closes the destination stream.
     // This is a custom event you can emit.
-    batchStream.once('terminate', () => {
+    inputStream.once('terminate', () => {
       this.finished = true;
       // end on next tick
       process.nextTick(this.end.bind(this));
@@ -30,17 +30,17 @@ class BatchStream extends PassThrough {
     // passing on the end event and wait before polling again.
     // This makes it appear downstream as if the stream has not ended but just
     // has no data for the present.
-    batchStream.once('end', () => {
-      batchStream.unpipe(this);
+    inputStream.once('end', () => {
+      inputStream.unpipe(this);
       if (!this.finished) this.emit('sync');
       setTimeout(() => this.poll(), this.interval);
     });
-    // Connect batchStream to this, but do not automatically pass end event
+    // Connect inputStream to this, but do not automatically pass end event
     // through.
-    batchStream.pipe(this, { end: false });
+    inputStream.pipe(this, { end: false });
   }
 }
 
 module.exports = function (fn, state = {}, opts) {
-  return new BatchStream(fn, state, opts);
+  return new PollingStream(fn, state, opts);
 };

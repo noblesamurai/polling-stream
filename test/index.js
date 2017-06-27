@@ -1,6 +1,6 @@
 const it = require('tape');
 const pollingStream = require('..');
-const { Readable } = require('stream');
+const { Readable, Writable } = require('stream');
 
 it('should be able to poll from a stream', (t) => {
   t.plan(16);
@@ -81,4 +81,33 @@ it('should handle errors', (t) => {
   s.on('end', () => {
     t.fail('stream should not end');
   });
+});
+
+it('should apply backpressure', (t) => {
+  t.plan(1);
+
+  let s = pollingStream(fn, { start: 0 }, { interval: 500, highWaterMark: 1 });
+  function fn(state) {
+    let rs = Readable({
+      objectMode: true,
+      highWaterMark: 1,
+      read: () => rs.push(next())
+    });
+    return rs;
+  }
+
+  let i = 0;
+  function next() {
+    return i < 10 ? i++ : null;
+  }
+
+  let ws = new Writable({ objectMode: true, highWaterMark: 1, write(c) {} });
+  s.pipe(ws);
+
+  // back pressure should be ~4, one for each step (rs, s and ws + an extra
+  // that is currently blocked in the ws:write call.
+  setTimeout(() => {
+    t.equal(i, 4);
+    t.end();
+  }, 0);
 });

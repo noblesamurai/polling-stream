@@ -22,9 +22,7 @@
   "bugs": {
     "url": "https://github.com/noblesamurai/polling-stream/issues"
   },
-  "dependencies": {
-    "once": "^1.4.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "tape": "^4.4.0"
   }

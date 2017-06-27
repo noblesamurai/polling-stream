@@ -1,5 +1,4 @@
-const once = require('once');
-const { Writable, Readable, PassThrough, Transform } = require('stream');
+const { PassThrough } = require('stream');
 
 class BatchStream extends PassThrough {
   constructor (fn, state = {}, opts) {

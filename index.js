@@ -7,14 +7,11 @@ class BatchStream extends PassThrough {
     this.fn = fn;
     this.state = state;
     this.finished = false;
-    this.polling = false;
     this.interval = opts.interval || 1000;
     this.poll();
   }
   poll () {
-    if (this.polling || this.finished) return;
-    this.polling = true;
-
+    if (this.finished) return;
     const batchStream = this.fn(this.state);
     batchStream.once('error', (err) => {
       this.finished = true;
@@ -29,7 +26,6 @@ class BatchStream extends PassThrough {
     batchStream.once('end', () => {
       batchStream.unpipe(this);
       if (!this.finished) this.emit('sync');
-      this.polling = false;
       this.poll();
       setTimeout(() => this.poll(), this.interval);
     });

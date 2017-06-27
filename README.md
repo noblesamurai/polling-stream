@@ -52,9 +52,23 @@ s.on('data', console.log);
 
 Returns a new polling stream.
 
-* `getNextStreamSegmentFn(streamState)` - a function that returns the next segment of data in the perpetual stream. It takes the `streamState` (which must be an `object`), and then returns a `ReadableStream` for the next segment of the stream. The function can mutate the `streamState` to keep track of where it is up to, and thus the next time it's called, it can resume where it left off.
-* `streamState` - a javascript object which can be used to store the state of where the stream is up to. eg. `{ lastKey: 1234 }`
-* `opts` - this will be passed to the constructor of the perpetual `ReadableStream`. It defaults to having `{ objectMode: true }`, so set this to false if you're dealing with binary streams. There is also a field called `interval` which is the poll frequency. When the stream that gets returned from `getNextStreamSegmentFn` finishes, this delay (in milliseconds) will elapse, before the function gets called again. It defaults to 1000 milliseconds (1 second).
+* `getNextStreamSegmentFn(streamState)` - a function that returns the next
+  segment of data in the perpetual stream. It takes the `streamState` (which
+  must be an `object`), and then returns a `ReadableStream` for the next
+  segment of the stream. The function can mutate the `streamState` to keep
+  track of where it is up to, and thus the next time it's called, it can resume
+  where it left off.
+* `streamState` - a javascript object which can be used to store the state of
+  where the stream is up to. eg. `{ lastKey: 1234 }`.  Note that needs to be an
+  object (i.e. passed by reference) and it is your responsibility to update the
+  interals of that object whilst consuming the stream.
+* `opts` - this will be passed to the constructor of the perpetual
+  `ReadableStream`. It defaults to having `{ objectMode: true }`, so set this
+  to false if you're dealing with binary streams. There is also a field called
+  `interval` which is the poll frequency. When the stream that gets returned
+  from `getNextStreamSegmentFn` finishes, this delay (in milliseconds) will
+  elapse, before the function gets called again. It defaults to 1000
+  milliseconds (1 second).
 
 ### `event('terminate')`
 

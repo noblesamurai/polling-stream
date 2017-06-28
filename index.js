@@ -8,9 +8,9 @@ class PollingStream extends PassThrough {
     this.interval = opts.interval || 1000;
     this.poll();
   }
-  poll () {
+  async poll () {
     if (this.finished) return;
-    const inputStream = this.fn();
+    const inputStream = await this.fn();
     // Errors in the underlying stream(s) are passed on.
     inputStream.once('error', (err) => {
       this.finished = true;

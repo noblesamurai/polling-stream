@@ -5,9 +5,9 @@ const { Readable, Writable } = require('stream');
 it('should be able to poll from a stream', (t) => {
   t.plan(16);
 
-  let s = pollingStream(fn, { start: 0, batch: 10 }, { interval: 2000 });
-  let j = 0;
-  function fn(state) {
+  const state = { start: 0, batch: 10 };
+  let s = pollingStream(fn, { interval: 2000 });
+  function fn () {
     let i = 0;
     let rs = Readable({
       objectMode: true,
@@ -18,7 +18,7 @@ it('should be able to poll from a stream', (t) => {
           return;
         }
         rs.push(state.start++);
-        if (++i >= state.batch) rs.push(null)
+        if (++i >= state.batch) rs.push(null);
       }
     });
     return rs;
@@ -28,7 +28,7 @@ it('should be able to poll from a stream', (t) => {
   let segments = 0;
   s.on('sync', () => {
     segments++;
-  })
+  });
   s.on('data', (data) => {
     t.equal(i++, data);
   });
@@ -42,9 +42,9 @@ it('should be able to poll from a stream', (t) => {
 it('should handle errors', (t) => {
   t.plan(16);
 
-  let s = pollingStream(fn, { start: 0, batch: 10 }, { interval: 500 });
-  let j = 0;
-  function fn(state) {
+  const state = { start: 0, batch: 10 };
+  let s = pollingStream(fn, { interval: 500 });
+  function fn () {
     let i = 0;
     let rs = Readable({
       objectMode: true,
@@ -53,7 +53,7 @@ it('should handle errors', (t) => {
           return rs.emit('error', new Error('there was an error'));
         }
         rs.push(state.start++);
-        if (++i >= state.batch) rs.push(null)
+        if (++i >= state.batch) rs.push(null);
       }
     });
     return rs;
@@ -67,7 +67,7 @@ it('should handle errors', (t) => {
   });
   s.on('sync', () => {
     segments++;
-  })
+  });
   s.on('data', (data) => {
     t.equal(i, data);
     if (i === 11) {
@@ -86,8 +86,8 @@ it('should handle errors', (t) => {
 it('should apply backpressure', (t) => {
   t.plan(1);
 
-  let s = pollingStream(fn, { start: 0 }, { interval: 500, highWaterMark: 1 });
-  function fn(state) {
+  let s = pollingStream(fn, { interval: 500, highWaterMark: 1 });
+  function fn () {
     let rs = Readable({
       objectMode: true,
       highWaterMark: 1,
@@ -97,11 +97,11 @@ it('should apply backpressure', (t) => {
   }
 
   let i = 0;
-  function next() {
+  function next () {
     return i < 10 ? i++ : null;
   }
 
-  let ws = new Writable({ objectMode: true, highWaterMark: 1, write(c) {} });
+  let ws = new Writable({ objectMode: true, highWaterMark: 1, write (c) {} });
   s.pipe(ws);
 
   // back pressure should be ~4, one for each step (rs, s and ws + an extra

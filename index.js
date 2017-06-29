@@ -46,6 +46,6 @@ class PollingStream extends PassThrough {
   }
 }
 
-module.exports = function (one, two, three, four) {
-  return new PollingStream(one, two, three, four);
+module.exports = function (...args) {
+  return new PollingStream(...args);
 };

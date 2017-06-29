@@ -18,24 +18,24 @@ $ npm install polling-stream
 
 ``` js
 let pollingStream = require('polling-stream');
+const initState = 0;
 // poll every 2 seconds after each segment stream has finished
-let s = pollingStream(getNextStreamSegment, { interval: 2000 }});
+let s = pollingStream(getNextStreamSegment, initState, updateState, { interval: 2000 }});
 
 // generate a stream of numbers from 0 to 13, in batches of 10 numbers
-let cursor = 0;
 const batch = 10;
-function getNextStreamSegment() {
-    let i = 0;
+function getNextStreamSegment(start) {
+    let i = start;
     let rs = Readable({
       objectMode: true,
       read: () => {
         // do a maximum of 14 elements
-        if (cursor === 14) {
+        if (i === 14) {
           rs.push(null);
           rs.emit('terminate');
           return;
         }
-        rs.push(cursor++);
+        rs.push(i);
 
         // just do 10 elements at a time
         if (++i >= batch) rs.push(null)
@@ -43,6 +43,11 @@ function getNextStreamSegment() {
     });
     return rs;
 }
+
+function updateState(curr) {
+  return curr + 1;
+}
+
 s.on('data', console.log);
 // Will print the numbers from 0 to 9, wait two seconds then print out
 // the nunbers 10 to 13
@@ -50,15 +55,18 @@ s.on('data', console.log);
 
 ## API
 
-### `pollingStream(getNextStreamSegmentFn, [opts])`
+### `pollingStream(getNextStreamSegmentFn, initState, updateStateFn, [opts])`
 
 Returns a new polling stream.
 
 * `getNextStreamSegmentFn()` - a function that returns the next
   segment of data in the perpetual stream. It returns a `ReadableStream` for the next
-  segment of the stream. The function can close over some kind of state
-  variable(s) to keep track of where it is up to, and thus the next time it's
-  called, it can resume where it left off. Or it can use whatever side effects
+  segment of the stream. The function is passed the current state which is
+  updated with every call to `write()` using the `updateState()` funciton.
+* `initState`  - the initial state that will be passed to `getNextStreamSegmentFn()`.
+* `updateStateFn`  - Each time `write()` is called on (i.e. each time we get a
+  chunk from the underlying stream) we call this to update our internal state.
+  It will be given the chunk and the current state as arguments.
   are required to maintain this (e.g. database writes/reads).
 * `opts` - this will be passed to the constructor of the perpetual
   `ReadableStream`. It defaults to having `{ objectMode: true }`, so set this

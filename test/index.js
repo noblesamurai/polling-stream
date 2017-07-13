@@ -2,23 +2,29 @@ const it = require('tape');
 const pollingStream = require('..');
 const { Readable, Writable } = require('stream');
 
+function updateState (start) {
+  return start + 1;
+}
+
 it('should be able to poll from a stream', (t) => {
   t.plan(16);
 
-  let s = pollingStream(fn, { start: 0, batch: 10 }, { interval: 2000 });
-  let j = 0;
-  function fn(state) {
-    let i = 0;
+  let s = pollingStream(fn, 0, updateState, { interval: 2000 });
+  function fn (start) {
+    let i = start;
+    let sent = 0;
     let rs = Readable({
       objectMode: true,
       read: () => {
-        if (state.start === 14) {
+        if (i === 14) {
           rs.push(null);
           rs.emit('terminate');
           return;
         }
-        rs.push(state.start++);
-        if (++i >= state.batch) rs.push(null)
+        if (sent === 10) rs.push(null);
+        else rs.push(i);
+        i++;
+        sent++;
       }
     });
     return rs;
@@ -28,7 +34,7 @@ it('should be able to poll from a stream', (t) => {
   let segments = 0;
   s.on('sync', () => {
     segments++;
-  })
+  });
   s.on('data', (data) => {
     t.equal(i++, data);
   });
@@ -42,18 +48,18 @@ it('should be able to poll from a stream', (t) => {
 it('should handle errors', (t) => {
   t.plan(16);
 
-  let s = pollingStream(fn, { start: 0, batch: 10 }, { interval: 500 });
-  let j = 0;
-  function fn(state) {
-    let i = 0;
+  let s = pollingStream(fn, 0, updateState, { interval: 500 });
+  function fn (start) {
+    let i = start;
     let rs = Readable({
       objectMode: true,
       read: () => {
-        if (state.start === 12) {
+        if (i === 12) {
           return rs.emit('error', new Error('there was an error'));
         }
-        rs.push(state.start++);
-        if (++i >= state.batch) rs.push(null)
+        rs.push(i);
+        if (i >= 10) rs.push(null);
+        i++;
       }
     });
     return rs;
@@ -67,7 +73,7 @@ it('should handle errors', (t) => {
   });
   s.on('sync', () => {
     segments++;
-  })
+  });
   s.on('data', (data) => {
     t.equal(i, data);
     if (i === 11) {
@@ -86,8 +92,8 @@ it('should handle errors', (t) => {
 it('should apply backpressure', (t) => {
   t.plan(1);
 
-  let s = pollingStream(fn, { start: 0 }, { interval: 500, highWaterMark: 1 });
-  function fn(state) {
+  let s = pollingStream(fn, {}, updateState, { interval: 500, highWaterMark: 1 });
+  function fn () {
     let rs = Readable({
       objectMode: true,
       highWaterMark: 1,
@@ -97,11 +103,11 @@ it('should apply backpressure', (t) => {
   }
 
   let i = 0;
-  function next() {
+  function next () {
     return i < 10 ? i++ : null;
   }
 
-  let ws = new Writable({ objectMode: true, highWaterMark: 1, write(c) {} });
+  let ws = new Writable({ objectMode: true, highWaterMark: 1, write (c) {} });
   s.pipe(ws);
 
   // back pressure should be ~4, one for each step (rs, s and ws + an extra

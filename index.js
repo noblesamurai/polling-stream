@@ -1,17 +1,22 @@
 const { PassThrough } = require('stream');
 
 class PollingStream extends PassThrough {
-  constructor (fn, state = {}, opts) {
+  constructor (create, initState, updateState, opts = {}) {
     super(Object.assign({}, opts, { objectMode: true }));
-    this.fn = fn;
-    this.state = state;
+    this.create = create;
+    this.updateState = updateState;
+    this.state = initState;
     this.finished = false;
     this.interval = opts.interval || 1000;
     this.poll();
   }
+  write (rec, enc, cb) {
+    this.state = this.updateState(rec, this.state);
+    return super.write(rec, enc, cb);
+  }
   poll () {
     if (this.finished) return;
-    const inputStream = this.fn(this.state);
+    const inputStream = this.create(this.state);
     // Errors in the underlying stream(s) are passed on.
     inputStream.once('error', (err) => {
       this.finished = true;
@@ -41,6 +46,6 @@ class PollingStream extends PassThrough {
   }
 }
 
-module.exports = function (fn, state = {}, opts) {
-  return new PollingStream(fn, state, opts);
+module.exports = function (...args) {
+  return new PollingStream(...args);
 };

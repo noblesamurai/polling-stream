@@ -83,3 +83,17 @@ If you want to actually terminate the perpetual stream you first have to end the
 ### `event('sync')`
 
 The perpetual stream emits a `sync` event when the stream segment has closed. You can hook into this to do things like regular logging, stats reporting, etc.
+
+## Contributing
+
+### Prerequisites
+
+```
+$ pip install pre-commit
+```
+
+### Installation
+
+```
+$ pre-commit install --install-hooks
+```
